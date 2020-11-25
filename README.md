@@ -1,6 +1,8 @@
 # ARM-Assembly-
 some tasks using the ARM assembly 
 
+THE TARGET THAT USED IN THIS PROJECT (Silicon labs->EFM32GG Series->EFM32GG9900)
+
 in this file you will find solutions for those tasks 
 
 Write values 100 and 0x1FFFFFF into registers r0 and r1.
