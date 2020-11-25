@@ -1,0 +1,684 @@
+
+
+
+ARM Macro Assembler    Page 1 
+
+
+    1 00000000 00000400 
+                       Stack_Size
+                               EQU              0x00000400
+    2 00000000 00000400 
+                       Heap_Size
+                               EQU              0x00000400
+    3 00000000 20001000 
+                       Variable_RAM1
+                               EQU              0x20001000
+    4 00000000 2000101A 
+                       REVERCE_BYTE_ORDER_64_BIT_VARIABLE
+                               EQU              0x2000101A  ;location into the 
+                                                            ram to stor the new
+                                                             value of the vaiab
+                                                            le after reversing 
+                                                            it 
+    5 00000000         
+    6 00000000                 AREA             STACK, NOINIT, READWRITE, ALIGN
+=3
+    7 00000000         Stack_Mem
+    8 00000000                 SPACE            Stack_Size
+    9 00000400         __initial_sp
+   10 00000400         
+   11 00000400                 AREA             RESET, DATA, READONLY,ALIGN=3
+   12 00000000 00000000        DCD              __initial_sp
+   13 00000004 00000000        DCD              Main
+   14 00000008         
+   15 00000008         ;*******************************************************
+                       *******************************************************
+   16 00000008         ;                                           FUNCTIONS 
+   17 00000008         ;*******************************************************
+                       *******************************************************
+   18 00000008         
+   19 00000008         ;CALL DELAY FUUNCTION 
+   20 00000008                 AREA             CALL_DELAY_FUNCTION, CODE, READ
+ONLY
+   21 00000000 B500            push             {lr}        ;push the last valu
+                                                            e of the LR into th
+                                                            e stack  
+   22 00000002 F7FF FFFE       BL               MY_DELAY_FUNCTION
+   23 00000006         ;this solution is optimized more than the second solutio
+                       n becuse it uses less execution cycles
+   24 00000006 BD00            pop              {pc}        ;pop PC to get back
+                                                             to the last exexut
+                                                            ion tin main thi 
+   25 00000008         ;another solution remove the ; from the 2 lines below 
+   26 00000008         ;pop{lr}
+   27 00000008         ;BX lr  
+   28 00000008         ;DELAY FUUNCTION 
+   29 00000008                 AREA             MY_DELAY_FUNCTION, CODE, READON
+LY
+   30 00000000 B401            PUSH             {R0}        ; push R0 to the st
+                                                            ack 
+   31 00000002         LOOP                                 ; Loop label
+   32 00000002 2800            CMP              R0, #0      ; CMP(compare) this
+                                                             instruction compar
+                                                            es the content of r
+                                                            egister to specifie
+                                                            d value 
+
+
+
+ARM Macro Assembler    Page 2 
+
+
+   33 00000004 DD02            BLE              ENDLOOP     ; will get out of  
+                                                            the loop if the con
+                                                            dition i>0 is false
+                                                             
+   34 00000006 F1A0 0001       SUB              R0, R0, #1  ; similar to i--
+   35 0000000A E7FA            B                LOOP        ; back to the begin
+                                                            ing of the loop to 
+                                                            repeat 
+   36 0000000C         ENDLOOP
+   37 0000000C BC01            POP{R0}                      ;pop R0 from the st
+                                                            ack 
+   38 0000000E 4770            BX               LR          ;after executing th
+                                                            e loop it jumps bac
+                                                            k to the linker reg
+                                                            ister 
+   39 00000010         END
+   40 00000010         
+   41 00000010                 AREA             REVERCE_BYTE_ORDER_64_BIT_FUNCT
+ION, CODE, READONLY
+   42 00000000 4808            LDR              R0, =Variable_64 ;pointer to th
+                                                            e variable that use
+                                                            r enered 
+   43 00000002 4E09            LDR              R6, =REVERCE_BYTE_ORDER_64_BIT_
+VARIABLE 
+                                                            ;location into the 
+                                                            ram to stor the new
+                                                             value of the vaiab
+                                                            le after reversing 
+                                                            it 
+   44 00000004 6841            LDR              R1, [R0, #4] ;load upper  part 
+                                                            of the variable
+   45 00000006 6802            LDR              R2, [R0]    ;load lower  part o
+                                                            f the variable 
+   46 00000008 BA0B            REV              R3, R1      ;1-revers the byte 
+                                                            order in the upper 
+                                                            part      0x2165432
+                                                            7
+   47 0000000A F003 03FF       AND              R3, #0x000000FF ;2-and the prev
+                                                            ious operation to g
+                                                            et first byte 0x000
+                                                            00027
+   48 0000000E 4614            MOV              R4, R2      ;0xFDA3210E
+   49 00000010 F363 0407       BFI              R4, R3, #0, #8 ;3-insert the la
+                                                            st byte of the uppe
+                                                            r nibble to the fir
+                                                            st byte in the low 
+                                                            inbble 0xFDA32127
+   50 00000014 F002 02FF       AND              R2, R2, #0x000000FF ;1-get the 
+                                                            first byte of the l
+                                                            ow nibble by anding
+                                                             with the musk R5 =
+                                                             0x0000000E
+   51 00000018 460D            MOV              R5, R1      ;0x27654321
+   52 0000001A F362 651F       BFI              R5, R2, #24, #8 ;0x0E654321
+   53 0000001E 6034            STR              R4, [R6]    ;0xFDA32127 lower
+   54 00000020 6075            STR              R5, [R6, #4] ;0x0E654321 upper 
+                                                                   
+   55 00000022 4770            BX               LR
+   56 00000024 00000000 
+
+
+
+ARM Macro Assembler    Page 3 
+
+
+              2000101A         AREA             |.text|, CODE, READONLY, ALIGN=
+8
+   57 00000000         
+   58 00000000         
+   59 00000000         ;*******************************************************
+                       *******************************************************
+   60 00000000         ;                                        MAIN FUNCTION 
+   61 00000000         ;*******************************************************
+                       *******************************************************
+   62 00000000         
+   63 00000000         
+   64 00000000         
+   65 00000000         Main
+   66 00000000         
+   67 00000000         ;*******************************************************
+                       *******************************************************
+   68 00000000         ;                                           NOTES 
+   69 00000000         ;*******************************************************
+                       *******************************************************
+   70 00000000         
+   71 00000000         ;to make a constant variable  variable name DCD value th
+                       at will take four bytes 
+   72 00000000         ;STR Rx, [Ry] store the value in registerX in a memory l
+                       ocation(address) who is value is registerY
+   73 00000000         ;REV reverse byte order 
+   74 00000000         ;REV16  reverse byte order in each half word
+   75 00000000         ;BFI this instruction used to insert a bit or even a but
+                       e or more  Note this instruction needs too registers   
+   76 00000000         ;BFI (Bit Field Insert) =>BFI  Rd, Rs, #the bit to start
+                        from, #the width or the number of bits you want to take
+                        from the specifid start
+   77 00000000         ;Rd the destination register to store  data in , Rs the 
+                       register you want to take data from it 
+   78 00000000         ;BFI this instruction used to clear a bit Note this inst
+                       ruction need only a register  
+   79 00000000         ;SUBS (subtraction with sufyx s) this instaction set the
+                        flag Z in the status register when it arrive to zero  
+   80 00000000         
+   81 00000000         ;*******************************************************
+                       *******************************************************
+   82 00000000         
+   83 00000000         ;*******************************************************
+                       *******************************************************
+   84 00000000         ;                                           Questiuon 1
+   85 00000000         ;*******************************************************
+                       *******************************************************
+   86 00000000         ;write values 100 and 0x1FFFFFF into registers r0 and r1
+                       
+   87 00000000 B403            push             {R0,R1}     ; push R0 and R1 to
+                                                             the stack to perfo
+                                                            rm operations on it
+                                                             
+   88 00000002 F04F 0064       MOV              R0, #100    ; write constant va
+                                                            lue in R0 R0 = 100
+   89 00000006 F06F 4160       MOV              R1, #0x1FFFFFFF ; write constan
+                                                            t value in R0 R0 = 
+                                                            0x1FFFFFFF
+   90 0000000A BC03            pop              {R0,R1}
+   91 0000000C         ;*******************************************************
+
+
+
+ARM Macro Assembler    Page 4 
+
+
+                       *******************************************************
+   92 0000000C         
+   93 0000000C         ;*******************************************************
+                       *******************************************************
+   94 0000000C         ;                                           Questiuon 2
+   95 0000000C         ;*******************************************************
+                       *******************************************************
+   96 0000000C         ;load from RAM memory with location 0x20001000 four byte
+                       s into register r1
+   97 0000000C         ;we load the address we want into a general prupose regi
+                       ster we choose R3 now R3 = 0x20001000
+   98 0000000C 4B16            LDR              R3, =Variable_RAM1 ;load the ad
+                                                            dress which we want
+                                                             to access in RAM i
+                                                            nto R3
+   99 0000000E         ;we made this step just to test by storing a value in th
+                       e location the we loaded it again if you want use it rem
+                       ove ; from the next line 
+  100 0000000E         ;STR     R0, [R3]          ; we make this for testing we
+                        put a value in the specific location of the ram to make
+                        sure we correctly accesed it
+  101 0000000E         ;we loaded the value from the location 0x20001000
+  102 0000000E 6819            LDR              R1, [R3]    ; the default value
+                                                             in this location 0
+                                                            x00000000 
+  103 00000010         ;*******************************************************
+                       *******************************************************
+  104 00000010         
+  105 00000010         ;*******************************************************
+                       *******************************************************
+  106 00000010         ;                                           Questiuon 3
+  107 00000010         ;*******************************************************
+                       *******************************************************
+  108 00000010         ;write 0xFF value (one byte length) to RAM memory locati
+                       on 0x20001000
+  109 00000010         ;Writting the desired value into register R2 now R2 = 0x
+                       FF 
+  110 00000010 F04F 02FF       MOV              R2, #0xFF
+  111 00000014         ;now store the in R2 in the memory location 0x20001000
+  112 00000014         ;note the suffyx B in STRB used to store a byte 
+  113 00000014 701A            STRB             R2, [R3]
+  114 00000016         ;we made this for testing to check if the data is actual
+                       ly stored in the location ox20001000 
+  115 00000016         ;we copied the data in register R1 
+  116 00000016         ;to use it remove ; from next line 
+  117 00000016         ;LDRB    R1, [R3]
+  118 00000016         ;*******************************************************
+                       ******************************************************* 
+                       
+  119 00000016         
+  120 00000016         ;*******************************************************
+                       *******************************************************
+  121 00000016         ;                                           Questiuon 4
+  122 00000016         ;*******************************************************
+                       *******************************************************
+  123 00000016         ;set and clear single bit at position 25 of variable (va
+                       riable address 0x20001000).
+  124 00000016         ;i have provided you to solutions for this task
+  125 00000016         ;First Solution 
+
+
+
+ARM Macro Assembler    Page 5 
+
+
+  126 00000016         ;in this method we use masking to set or clear a bit as 
+                       you know 0 OR 1 = 1 , 0 AND 1 = 0 
+  127 00000016         ;SET BIT 
+  128 00000016         ;we use this mask 000000100000000000 to set bit number 2
+                       5 with content of register R2 
+  129 00000016 F042 7200       ORR              R2,#0x2000000 ;set bit number 2
+                                                            5 R2 OR 0x2000000 =
+                                                             0x020000FF
+  130 0000001A 601A            STR              R2, [R3]    ;we store the new v
+                                                            alue at the specifi
+                                                            c address  
+  131 0000001C 6819            LDR              R1, [R3]    ; we loadded it jus
+                                                            t to make sure its 
+                                                            succesfully loaded
+  132 0000001E         ;CLEAR BIT
+  133 0000001E         ;we use this mask 11111101111111111 to clear bit number 
+                       25 with content of register R2 
+  134 0000001E F022 6270       AND              R2,#0xF0FFFFFF ;clear bit numbe
+                                                            r 25  R2 AND 0xF0FF
+                                                            FFFF = 0x000000FF
+  135 00000022 601A            STR              R2, [R3]    ;we store the new v
+                                                            alue at the specifi
+                                                            c address  
+  136 00000024 6819            LDR              R1, [R3]    ; we loadded it jus
+                                                            t to make sure its 
+                                                            succesfully loaded
+  137 00000026         
+  138 00000026         ;Second Solution 
+  139 00000026         ;to use this solution remove the ; from the lines blewo 
+                       
+  140 00000026         ;we use those two instructions BFI (Bit Filed Insert), B
+                       FC (Bit Filed clear) to know about them read the not sec
+                       tion above the page 
+  141 00000026         ;MOV  R4, #1    ;put 1 in register R4 because we will ne
+                       ed it for the next instruction R4 = 1 
+  142 00000026         ;BFI  R2, R4, #25 ,#1  ;this instruction take the stord 
+                       value from register R4 and put it in bit 25 and #1 indic
+                       ates we will take one bit width and store the value in R
+                       2
+  143 00000026         ;STR  R2, [R3]         ;we store the new value at the sp
+                       ecific address  
+  144 00000026         ;LDR  R1, [R3]         ; we loadded it just to make sure
+                        its succesfully loaded
+  145 00000026         ;CLEAR BIT 
+  146 00000026         ;BFC  R2, #25 ,#1      ;this instruction clears bit 25  
+                       #1 indicates we will take one bit width
+  147 00000026         ;STR  R2, [R3]         ;we store the new value at the sp
+                       ecific address  
+  148 00000026         ;LDR  R1, [R3]         ; we loadded it just to make sure
+                        its succesfully loaded
+  149 00000026         
+  150 00000026         ;*******************************************************
+                       ******************************************************* 
+                       
+  151 00000026         
+  152 00000026         ;*******************************************************
+                       *******************************************************
+  153 00000026         ;                                           Questiuon 5
+  154 00000026         ;*******************************************************
+
+
+
+ARM Macro Assembler    Page 6 
+
+
+                       *******************************************************
+  155 00000026         ;decrement register for 10 times until zero (use SUBS in
+                       struction)
+  156 00000026 F04F 0502       MOV              R5,#2       ;put value of 10 in
+                                                             register R5 to dec
+                                                            rement it 10 times 
+                                                             
+  157 0000002A         ;this the for loop body 
+  158 0000002A         FOR_LOOP                             ; Loop label
+  159 0000002A 2D00            CMP              R5, #0      ; CMP(compare) this
+                                                             instruction compar
+                                                            es the content of r
+                                                            egister to specifie
+                                                            d value 
+  160 0000002C DD01            BLE              END_FOR_LOOP ; will get out of 
+                                                             the loop if the co
+                                                            ndition i>0 is fals
+                                                            e 
+  161 0000002E 1E6D            SUBS             R5, R5, #1  ; similar to i--
+  162 00000030 E7FB            B                FOR_LOOP    ; back to the begin
+                                                            ing of the loop to 
+                                                            repeat 
+  163 00000032         END_FOR_LOOP
+  164 00000032         
+  165 00000032         ;*******************************************************
+                       ******************************************************* 
+                       
+  166 00000032         
+  167 00000032         ;*******************************************************
+                       *******************************************************
+  168 00000032         ;                                           Questiuon 6
+  169 00000032         ;*******************************************************
+                       *******************************************************
+  170 00000032         ;read both stack registers (msp, psp) into r0 and r1 reg
+                       isters
+  171 00000032         ;MRS specific instruction to read from processor registe
+                       rs and store their value in general purpose register
+  172 00000032 B403            push             {R0,R1}
+  173 00000034 F3EF 8008       MRS              R0, MSP
+  174 00000038 F3EF 8109       MRS              R1, PSP
+  175 0000003C BC03            pop              {R0,R1}
+  176 0000003E         ;*******************************************************
+                       ******************************************************* 
+                       
+  177 0000003E         
+  178 0000003E         ;*******************************************************
+                       *******************************************************
+  179 0000003E         ;                                           Questiuon 7
+  180 0000003E         ;*******************************************************
+                       *******************************************************
+  181 0000003E         ;read programa counter(pc) to r0 register
+  182 0000003E 4678            MOV              R0, PC
+  183 00000040         ;*******************************************************
+                       ******************************************************* 
+                       
+  184 00000040         
+  185 00000040         ;*******************************************************
+                       *******************************************************
+  186 00000040         ;                                           Questiuon 8
+
+
+
+ARM Macro Assembler    Page 7 
+
+
+  187 00000040         ;*******************************************************
+                       *******************************************************
+  188 00000040         ;create simple delay function (pass variable into r0 how
+                        much to delay) 
+  189 00000040         ;put the value of delay you want to pass to the function
+                        (note delay is in millisecond)
+  190 00000040 F04F 0002       MOV              R0, #2
+  191 00000044 F7FF FFFE       BL               MY_DELAY_FUNCTION ; call Delay 
+                                                            Function 
+  192 00000048         ;*******************************************************
+                       *******************************************************
+  193 00000048         ;push {PC}
+  194 00000048 F7FF FFFE       BL               CALL_DELAY_FUNCTION
+  195 0000004C         ;*******************************************************
+                       *******************************************************
+  196 0000004C         ;                                           Questiuon 10
+                       
+  197 0000004C         ;*******************************************************
+                       *******************************************************
+  198 0000004C         ;multiply r0 register by 3 ussing single ADD instruction
+                        (use barrel shifter).
+  199 0000004C         ;barrel shifter technique 
+  200 0000004C         ;it shifts the register to the left 1 time (one shifting
+                        to the lift is multiplying  the number by two)
+  201 0000004C         ;then add the register ti itself again after sifting it 
+                       
+  202 0000004C         ;so that is the same as we multiply by 3 
+  203 0000004C EB00 0040       ADD              R0, R0,R0, LSL #1
+  204 00000050         ;*******************************************************
+                       *******************************************************
+  205 00000050         
+  206 00000050         ;*******************************************************
+                       *******************************************************
+  207 00000050         ;                                           Questiuon 11
+                       
+  208 00000050         ;*******************************************************
+                       *******************************************************
+  209 00000050         ;reverse all bits for register r0
+  210 00000050         ;RBIT (Rotate Bit) is a specific instruction rotates all
+                        the bits 
+  211 00000050 FA90 F0A0       RBIT             R0, R0
+  212 00000054         ;*******************************************************
+                       *******************************************************
+  213 00000054         
+  214 00000054         ;*******************************************************
+                       *******************************************************
+  215 00000054         ;                                           Questiuon 12
+                       
+  216 00000054         ;*******************************************************
+                       *******************************************************
+  217 00000054         ;create function: reverser byte order for long long vari
+                       able (64 bits length)
+  218 00000054 FDA3210E 
+              27654321 Variable_64
+                               DCQ              0x27654321FDA3210E ;your 64 bit
+                                                             variable you want 
+                                                            to reverse its byte
+                                                             order 
+  219 0000005C F7FF FFFE       BL               REVERCE_BYTE_ORDER_64_BIT_FUNCT
+
+
+
+ARM Macro Assembler    Page 8 
+
+
+ION 
+                                                            ;call the function 
+                                                            
+  220 00000060 6872            LDR              R2, [R6, #4] ;load upper  part 
+                                                            of the variable
+  221 00000062 6833            LDR              R3, [R6]    ;load lower  part o
+                                                            f the variable 
+  222 00000064         ;*******************************************************
+                       *******************************************************
+  223 00000064         
+  224 00000064         ; Infinite LOOP 
+  225 00000064 E7FE            B                .
+  226 00000066                 END
+              00 00 20001000 
+Command Line: --debug --xref --diag_suppress=9931 --cpu=Cortex-M3 --apcs=interw
+ork --depend=.\objects\main.d -o.\objects\main.o -IC:\Users\BNDesouky\AppData\L
+ocal\Arm\Packs\SiliconLabs\GeckoPlatform_EFM32GG_DFP\3.0.0\Device\SiliconLabs\E
+FM32GG\Include -IC:\Keil_v5\ARM\CMSIS\Include --predefine="__EVAL SETA 1" --pre
+define="__UVISION_VERSION SETA 531" --predefine="EFM32GG990F1024 SETA 1" --list
+=.\listings\main.lst main.s
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+STACK 00000000
+
+Symbol: STACK
+   Definitions
+      At line 6 in file main.s
+   Uses
+      None
+Comment: STACK unused
+Stack_Mem 00000000
+
+Symbol: Stack_Mem
+   Definitions
+      At line 7 in file main.s
+   Uses
+      None
+Comment: Stack_Mem unused
+__initial_sp 00000400
+
+Symbol: __initial_sp
+   Definitions
+      At line 9 in file main.s
+   Uses
+      At line 12 in file main.s
+Comment: __initial_sp used once
+3 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+RESET 00000000
+
+Symbol: RESET
+   Definitions
+      At line 11 in file main.s
+   Uses
+      None
+Comment: RESET unused
+1 symbol
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+CALL_DELAY_FUNCTION 00000000
+
+Symbol: CALL_DELAY_FUNCTION
+   Definitions
+      At line 20 in file main.s
+   Uses
+      At line 194 in file main.s
+Comment: CALL_DELAY_FUNCTION used once
+1 symbol
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+END 00000010
+
+Symbol: END
+   Definitions
+      At line 39 in file main.s
+   Uses
+      None
+Comment: END unused
+ENDLOOP 0000000C
+
+Symbol: ENDLOOP
+   Definitions
+      At line 36 in file main.s
+   Uses
+      At line 33 in file main.s
+Comment: ENDLOOP used once
+LOOP 00000002
+
+Symbol: LOOP
+   Definitions
+      At line 31 in file main.s
+   Uses
+      At line 35 in file main.s
+Comment: LOOP used once
+MY_DELAY_FUNCTION 00000000
+
+Symbol: MY_DELAY_FUNCTION
+   Definitions
+      At line 29 in file main.s
+   Uses
+      At line 22 in file main.s
+      At line 191 in file main.s
+
+4 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+REVERCE_BYTE_ORDER_64_BIT_FUNCTION 00000000
+
+Symbol: REVERCE_BYTE_ORDER_64_BIT_FUNCTION
+   Definitions
+      At line 41 in file main.s
+   Uses
+      At line 219 in file main.s
+Comment: REVERCE_BYTE_ORDER_64_BIT_FUNCTION used once
+1 symbol
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Relocatable symbols
+
+.text 00000000
+
+Symbol: .text
+   Definitions
+      At line 56 in file main.s
+   Uses
+      None
+Comment: .text unused
+END_FOR_LOOP 00000032
+
+Symbol: END_FOR_LOOP
+   Definitions
+      At line 163 in file main.s
+   Uses
+      At line 160 in file main.s
+Comment: END_FOR_LOOP used once
+FOR_LOOP 0000002A
+
+Symbol: FOR_LOOP
+   Definitions
+      At line 158 in file main.s
+   Uses
+      At line 162 in file main.s
+Comment: FOR_LOOP used once
+Main 00000000
+
+Symbol: Main
+   Definitions
+      At line 65 in file main.s
+   Uses
+      At line 13 in file main.s
+Comment: Main used once
+Variable_64 00000054
+
+Symbol: Variable_64
+   Definitions
+      At line 218 in file main.s
+   Uses
+      At line 42 in file main.s
+Comment: Variable_64 used once
+5 symbols
+
+
+
+ARM Macro Assembler    Page 1 Alphabetic symbol ordering
+Absolute symbols
+
+Heap_Size 00000400
+
+Symbol: Heap_Size
+   Definitions
+      At line 2 in file main.s
+   Uses
+      None
+Comment: Heap_Size unused
+REVERCE_BYTE_ORDER_64_BIT_VARIABLE 2000101A
+
+Symbol: REVERCE_BYTE_ORDER_64_BIT_VARIABLE
+   Definitions
+      At line 4 in file main.s
+   Uses
+      At line 43 in file main.s
+Comment: REVERCE_BYTE_ORDER_64_BIT_VARIABLE used once
+Stack_Size 00000400
+
+Symbol: Stack_Size
+   Definitions
+      At line 1 in file main.s
+   Uses
+      At line 8 in file main.s
+Comment: Stack_Size used once
+Variable_RAM1 20001000
+
+Symbol: Variable_RAM1
+   Definitions
+      At line 3 in file main.s
+   Uses
+      At line 98 in file main.s
+Comment: Variable_RAM1 used once
+4 symbols
+356 symbols in table
