@@ -12,7 +12,7 @@
 Stack_Size      		     EQU     0x00000400 
 Heap_Size       		     EQU     0x00000400
 Variable_RAM1   		     EQU     0x20001000  
-REVERCE_BYTE_ORDER_64_BIT_VARIABLE   EQU     0x2000101A ;location into the ram to stor the new value of the vaiable after reversing it 
+REVERCE_BYTE_ORDER_64_BIT_VARIABLE   EQU     0x2000101A     ;location into the ram to stor the new value of the vaiable after reversing it 
 
 ;**************************************************************************************************************
 ;                                           SECTIONS 
@@ -45,30 +45,30 @@ __initial_sp
 		AREA    MY_DELAY_FUNCTION, CODE, READONLY 
 				PUSH {R0}	   ; push R0 to the stack 
 LOOP			   ; Loop label
-	CMP R0, #0     ; CMP(compare) this instruction compares the content of register to specified value 
-	BLE ENDLOOP    ; will get out of  the loop if the condition i>0 is false 
-	SUB R0, R0, #1 ; similar to i--
-	B LOOP         ; back to the begining of the loop to repeat 
+	CMP R0, #0         ; CMP(compare) this instruction compares the content of register to specified value 
+	BLE ENDLOOP        ; will get out of  the loop if the condition i>0 is false 
+	SUB R0, R0, #1     ; similar to i--
+	B LOOP             ; back to the begining of the loop to repeat 
 ENDLOOP
 	POP{R0}		   ;pop R0 from the stack 
-	BX LR          ;after executing the loop it jumps back to the linker register 
+	BX LR              ;after executing the loop it jumps back to the linker register 
 END
 
 ;REVERCE BYTE ORDER FUUNCTION
 		AREA    REVERCE_BYTE_ORDER_64_BIT_FUNCTION, CODE, READONLY
-				LDR R0, =Variable_64      ;pointer to the variable that user enered 
+				LDR R0, =Variable_64      		     ;pointer to the variable that user enered 
 				LDR R6, =REVERCE_BYTE_ORDER_64_BIT_VARIABLE  ;location into the ram to stor the new value of the vaiable after reversing it 
-				LDR R1, [R0, #4]          ;load upper  part of the variable
-				LDR R2, [R0]			  ;load lower  part of the variable 
-				REV R3, R1				  ;1-revers the byte order in the upper part      0x21654327
-				AND R3, #0x000000FF		  ;2-and the previous operation to get first byte 0x00000027
-				MOV R4, R2				  ;0xFDA3210E
-				BFI R4, R3, #0, #8	      ;3-insert the last byte of the upper nibble to the first byte in the low inbble 0xFDA32127
-				AND R2, R2, #0x000000FF	  ;1-get the first byte of the low nibble by anding with the musk R5 = 0x0000000E
-				MOV R5, R1				  ;0x27654321
-				BFI R5, R2, #24, #8		  ;0x0E654321
-				STR R4, [R6]			  ;0xFDA32127 lower
-				STR R5, [R6, #4]		  ;0x0E654321 upper 							
+				LDR R1, [R0, #4]            		     ;load upper  part of the variable
+				LDR R2, [R0]	 	   		     ;load lower  part of the variable 
+				REV R3, R1				     ;1-revers the byte order in the upper part      0x21654327
+				AND R3, #0x000000FF		             ;2-and the previous operation to get first byte 0x00000027
+				MOV R4, R2				     ;0xFDA3210E
+				BFI R4, R3, #0, #8	                     ;3-insert the last byte of the upper nibble to the first byte in the low inbble 0xFDA32127
+				AND R2, R2, #0x000000FF	                     ;1-get the first byte of the low nibble by anding with the musk R5 = 0x0000000E
+				MOV R5, R1				     ;0x27654321
+				BFI R5, R2, #24, #8		             ;0x0E654321
+				STR R4, [R6]			             ;0xFDA32127 lower
+				STR R5, [R6, #4]		             ;0x0E654321 upper 							
 				BX  LR
 
         	AREA    |.text|, CODE, READONLY, ALIGN=8 
@@ -101,23 +101,23 @@ Main
 		;**************************************************************************************************************
 		;                                           Questiuon 1
 		;**************************************************************************************************************
-		;write values 100 and 0x1FFFFFF into registers r0 and r1
+		;write values 100 and 0x1FFFFFF into registers R0 and R1
 		push    {R0,R1}					; push R0 and R1 to the stack to perform operations on it 
-        	MOV     R0, #100	            ; write constant value in R0 R0 = 100
-       		MOV     R1, #0x1FFFFFFF         ; write constant value in R0 R0 = 0x1FFFFFFF
+        	MOV     R0, #100	                        ; write constant value in R0 R0 = 100
+       		MOV     R1, #0x1FFFFFFF                         ; write constant value in R0 R0 = 0x1FFFFFFF
 		pop     {R0,R1}
 		;**************************************************************************************************************
 		
 		;**************************************************************************************************************
 		;                                           Questiuon 2
 		;**************************************************************************************************************
-		;load from RAM memory with location 0x20001000 four bytes into register r1
+		;load from RAM memory with location 0x20001000 four bytes into register R1
 		;we load the address we want into a general prupose register we choose R3 now R3 = 0x20001000
-	    	LDR     R3, =Variable_RAM1      ;load the address which we want to access in RAM into R3
+	    	LDR     R3, =Variable_RAM1              ;load the address which we want to access in RAM into R3
 		;we made this step just to test by storing a value in the location the we loaded it again if you want use it remove ; from the next line 
 		;STR     R0, [R3]		        ; we make this for testing we put a value in the specific location of the ram to make sure we correctly accesed it
 		;we loaded the value from the location 0x20001000
-		LDR     R1, [R3]                ; the default value in this location 0x00000000 
+		LDR     R1, [R3]                        ; the default value in this location 0x00000000 
 		;**************************************************************************************************************
 		
 		;**************************************************************************************************************
@@ -156,7 +156,7 @@ Main
 		;Second Solution 
 		;to use this solution remove the ; from the lines blewo 
 		;we use those two instructions BFI (Bit Filed Insert), BFC (Bit Filed clear) to know about them read the not section above the page 
-		;MOV 	R4, #1			 ;put 1 in register R4 because we will need it for the next instruction R4 = 1 
+		;MOV 	R4, #1	         ;put 1 in register R4 because we will need it for the next instruction R4 = 1 
 		;BFI 	R2, R4, #25 ,#1  ;this instruction take the stord value from register R4 and put it in bit 25 and #1 indicates we will take one bit width and store the value in R2
 		;STR 	R2, [R3]         ;we store the new value at the specific address  
 		;LDR 	R1, [R3]         ; we loadded it just to make sure its succesfully loaded
@@ -174,10 +174,10 @@ Main
 		MOV 	R5,#2 ;put value of 10 in register R5 to decrement it 10 times  
 ;this the for loop body 
 FOR_LOOP			   ; Loop label
-	CMP R5, #0     ; CMP(compare) this instruction compares the content of register to specified value 
-	BLE END_FOR_LOOP    ; will get out of  the loop if the condition i>0 is false 
-	SUBS R5, R5, #1 	; similar to i--
-	B FOR_LOOP         	; back to the begining of the loop to repeat 
+	CMP R5, #0                 ; CMP(compare) this instruction compares the content of register to specified value 
+	BLE END_FOR_LOOP           ; will get out of  the loop if the condition i>0 is false 
+	SUBS R5, R5, #1 	   ; similar to i--
+	B FOR_LOOP         	   ; back to the begining of the loop to repeat 
 END_FOR_LOOP
 		
 		;************************************************************************************************************** 
@@ -233,10 +233,10 @@ END_FOR_LOOP
 		;                                           Questiuon 12
 		;**************************************************************************************************************
 		;create function: reverser byte order for long long variable (64 bits length)
-Variable_64        DCQ     0x27654321FDA3210E		;your 64 bit variable you want to reverse its byte order 
+Variable_64        DCQ     0x27654321FDA3210E		    ;your 64 bit variable you want to reverse its byte order 
 		BL REVERCE_BYTE_ORDER_64_BIT_FUNCTION	    ;call the function 
 		LDR R2, [R6, #4]                            ;load upper  part of the variable
-		LDR R3, [R6]			                    ;load lower  part of the variable 
+		LDR R3, [R6]			            ;load lower  part of the variable 
 		;**************************************************************************************************************
 
 		; Infinite LOOP 
