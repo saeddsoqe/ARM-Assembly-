@@ -11,7 +11,7 @@ Write values 100 and 0x1FFFFFF into registers R0 and R1.
 
 Load from RAM memory with location 0x20001000 four bytes into register R1.
 
-WRite 0xFF value (one byte length) to RAM memory location 0x20001000.
+Write 0xFF value (one byte length) to RAM memory location 0x20001000.
 
 Set and clear single bit at position 25 of variable (variable address 0x20001000).
 
